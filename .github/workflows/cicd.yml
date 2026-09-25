@@ -1,0 +1,107 @@
+name: Laravel CI/CD
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, fileinfo, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, fileinfo, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Copy environment file
+        run: cp .env.example .env
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Run Laravel tests
+        run: php artisan test
+
+
+  staging:
+    name: Staging
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Deploy to staging
+        run: echo "Deploying application to staging..."
+
+
+  production:
+    name: Production
+    runs-on: ubuntu-latest
+    needs: staging
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy step 1
+        run: echo "1. Pull latest source code"
+
+      - name: Deploy step 2
+        run: echo "2. Install Composer dependencies"
+
+      - name: Deploy step 3
+        run: echo "3. Set environment configuration"
+
+      - name: Deploy step 4
+        run: echo "4. Run database migrations"
+
+      - name: Deploy step 5
+        run: echo "5. Clear and rebuild Laravel cache"
+
+      - name: Deploy step 6
+        run: echo "6. Restart application services"
+
+      - name: Deploy step 7
+        run: echo "7. Verify production deployment"
