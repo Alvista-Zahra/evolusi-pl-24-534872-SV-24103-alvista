@@ -24,13 +24,14 @@ RUN composer install \
     --prefer-dist \
     --no-scripts
 
-# Salin source code setelah dependency selesai
 COPY . .
 
-# Jalankan Laravel package discovery setelah source code tersedia
 RUN php artisan package:discover --ansi
 
-# Pastikan folder Laravel dapat ditulis
+RUN mkdir -p database \
+    && touch database/database.sqlite \
+    && php artisan migrate --force
+
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8000
